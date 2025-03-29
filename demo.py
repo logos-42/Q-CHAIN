@@ -240,11 +240,10 @@ def simulate_grover_search(target_hash_prefix, difficulty=4):
     
     elapsed_time = time.time() - start_time
     
-    print(f"经过{attempts}次尝试后找到了有效哈 ?)
-    print(f"Nonce ? {nonce_decimal}")
-    print(f"最终哈 ? {current_hash}")
-    print(f"用时: {elapsed_time:.2f} ?)
-    
+    print(f"经过{attempts}次尝试后找到了有效哈希")
+    print(f"Nonce: {nonce_decimal}")
+    print(f"最终哈希: {current_hash}")
+    print(f"用时: {elapsed_time:.2f}秒")
     # 在实际量子计算中，Grover算法可以提供二次加 ?
     print(f"经典计算预期尝试次数: {2**difficulty}")
     print(f"理论量子Grover算法尝试次数: 约{int(np.sqrt(2**difficulty))}")
@@ -252,66 +251,67 @@ def simulate_grover_search(target_hash_prefix, difficulty=4):
     return nonce_decimal
 
 def create_genesis_quantum_block():
-    """创建并展示创世区块的量子特 ?""
-    print("\n======= 量子区块链创世区块创 ?=======")
+    """创建并展示创世区块的量子特性"""
+    print("\n======= 量子区块链创世区块创建 =======")
     
-    # 1. 生成量子密钥对（类QPanda风格 ?
+    # 1. 生成量子密钥对（类QPanda风格）
     key_counts, quantum_key = qpanda_inspired_key_generation(2)
     
     # 2. 创建初始交易数据
     genesis_transactions = [
         {"type": "coinbase", "recipient": "创始者地址", "amount": 50, "timestamp": time.time()},
-        {"type": "message", "content": "量子区块链创世块 - 融合QPanda与Q#概念的实 ?, "timestamp": time.time()}
+        {"type": "message", "content": "量子区块链创世块 - 融合QPanda与Q#概念的实现", "timestamp": time.time()}
     ]
     
     # 3. 计算分形Merkle树根
     merkle_root = fractal_merkle_tree(genesis_transactions)
     
-    # 4. 生成量子签名（类Q#风格 ?
-    genesis_message = f"创世 ?- 时间 ?{time.time()} - Merkle ?{merkle_root}"
+    # 4. 生成量子签名（类Q#风格）
+    genesis_message = f"创世块 - 时间：{time.time()} - Merkle根：{merkle_root}"
     quantum_signature = qsharp_inspired_quantum_sign(genesis_message, quantum_key)
     
     # 5. 模拟Grover算法挖矿
     nonce = simulate_grover_search(merkle_root[:16], difficulty=2)
     
     # 6. 创建最终的创世区块
-    print("\n===== 创建最终创世区 ?=====")
-    blockchain = QuantumBlockchain()  # 创建一个新的区块链，自动生成创世区 ?
+    print("\n===== 创建最终创世区块 =====")
+    blockchain = QuantumBlockchain()  # 创建一个新的区块链，自动生成创世区块
     
-    # 修改创世区块以包含我们生成的所有量子增强属 ?
+    # 修改创世区块以包含我们生成的所有量子增强属性
     genesis_block = blockchain.chain[0]
     genesis_block.data = {
-        "message": "量子区块链创世区 ?- 融合QPanda与Q#概念",
+        "message": "量子区块链创世区块 - 融合QPanda与Q#概念",
         "transactions": genesis_transactions,
         "merkle_root": merkle_root,
         "quantum_signature": quantum_signature,
         "nonce": nonce,
-        "quantum_key_public": quantum_key,"token": {"name": "COP","symbol": "COP","total_supply": 1000000000000,"decimals": 18,"creator": "  ʼ ߵ ַ"}
+        "quantum_key_public": quantum_key,
+        "token": {"name": "COP", "symbol": "COP", "total_supply": 1000000000000, "decimals": 18, "creator": "创始者地址"}
     }
     
     # 重新计算哈希
     genesis_block.hash = genesis_block._calculate_hash()
     
-    # 显示最终创世区块信 ?
-    print("\n创世区块最终信 ?")
+    # 显示最终创世区块信息
+    print("\n创世区块最终信息")
     print(f"索引: {genesis_block.index}")
-    print(f"时间 ? {time.ctime(genesis_block.timestamp)}")
+    print(f"时间戳: {time.ctime(genesis_block.timestamp)}")
     print(f"数据摘要: {json.dumps(genesis_block.data, indent=2)}")
-    print(f"前一个哈 ? {genesis_block.previous_hash}")
-    print(f"量子签名: {genesis_block.quantum_signature[:16]}... (已截 ?")
+    print(f"前一个哈希: {genesis_block.previous_hash}")
+    print(f"量子签名: {genesis_block.quantum_signature[:16]}... (已截断)")
     print(f"区块哈希: {genesis_block.hash}")
     
     return blockchain
 
 if __name__ == "__main__":
     print("========================================")
-    print("   量子区块链创世区块演 ?)
+    print("   量子区块链创世区块演示")
     print("  融合QPanda和Q#概念的Qiskit实现")
     print("========================================")
     
     # 创建量子创世区块
     quantum_blockchain = create_genesis_quantum_block()
     
-    print("\n演示完成! 量子区块链已成功初始化并创建创世区块 ?)
+    print("\n演示完成! 量子区块链已成功初始化并创建创世区块")
     print("使用'python visualize_quantum_blockchain.py'可以查看区块链可视化结果") 
 

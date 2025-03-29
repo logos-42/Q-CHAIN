@@ -286,7 +286,7 @@ def create_genesis_quantum_block():
         "quantum_signature": quantum_signature,
         "nonce": nonce,
         "quantum_key_public": quantum_key,
-        "token": {"name": "COP", "symbol": "COP", "total_supply": 1000000000000, "decimals": 18, "creator": "创始者地址"}
+        "token": {"name": "COP","symbol": "COP","total_supply": 1000000000000,"decimals": 18,"creator": "创始者地址"}
     }
     
     # 重新计算哈希
@@ -312,6 +312,6 @@ if __name__ == "__main__":
     # 创建量子创世区块
     quantum_blockchain = create_genesis_quantum_block()
     
-    print("\n演示完成! 量子区块链已成功初始化并创建创世区块")
+    print("\n演示完成! 量子区块链已成功初始化并创建创世区块！")
     print("使用'python visualize_quantum_blockchain.py'可以查看区块链可视化结果") 
 

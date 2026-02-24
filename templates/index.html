@@ -107,31 +107,48 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 加载区块链数据
-    fetch('/api/blockchain')
-        .then(response => response.json())
-        .then(data => {
-            // 更新区块链概况
-            document.getElementById('total-blocks').querySelector('h3').textContent = data.length;
-            document.getElementById('latest-block').querySelector('h3').textContent = data.length > 0 ? 
-                data.chain[data.length - 1].index : 0;
-            
-            // 计算总交易数
-            let totalTx = 0;
-            data.chain.forEach(block => {
-                if (block.data && block.data.transactions) {
-                    totalTx += block.data.transactions.length;
-                }
-            });
-            document.getElementById('total-transactions').querySelector('h3').textContent = totalTx;
-            
-            // 更新最新区块表格
-            updateLatestBlocksTable(data.chain.slice(-5).reverse());
+// 统一API调用函数
+async function apiQuery(action, params = {}) {
+    const response = await fetch('/api/v1/query', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            action: action,
+            params: params,
+            version: '1.0'
         })
-        .catch(error => {
-            console.error('加载区块链数据失败:', error);
+    });
+    const result = await response.json();
+    if (result.code !== 0) {
+        throw new Error(result.message);
+    }
+    return result.data;
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // 使用统一API加载区块链数据
+        const data = await apiQuery('get_blockchain');
+        
+        // 更新区块链概况
+        document.getElementById('total-blocks').querySelector('h3').textContent = data.length;
+        document.getElementById('latest-block').querySelector('h3').textContent = data.length > 0 ? 
+            data.chain[data.length - 1].index : 0;
+        
+        // 计算总交易数
+        let totalTx = 0;
+        data.chain.forEach(block => {
+            if (block.data && block.data.transactions) {
+                totalTx += block.data.transactions.length;
+            }
         });
+        document.getElementById('total-transactions').querySelector('h3').textContent = totalTx;
+        
+        // 更新最新区块表格
+        updateLatestBlocksTable(data.chain.slice(-5).reverse());
+    } catch (error) {
+        console.error('加载区块链数据失败:', error);
+    });
     
     // 绘制量子优势图表
     const ctx = document.getElementById('quantum-advantage-chart').getContext('2d');

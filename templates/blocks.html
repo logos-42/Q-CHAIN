@@ -57,10 +57,42 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 检查URL参数是否有指定区块
     const urlParams = new URLSearchParams(window.location.search);
-    const blockIndex = urlParams.get('block');
-    if (blockIndex) {
-        loadBlockDetails(blockIndex);
+// 统一API调用函数
+async function apiQuery(action, params = {}) {
+    const response = await fetch('/api/v1/query', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            action: action,
+            params: params,
+            version: '1.0'
+        })
+    });
+    const result = await response.json();
+    if (result.code !== 0) {
+        throw new Error(result.message);
     }
+    return result.data;
+}
+
+const blockIndex = urlParams.get('block');
+if (blockIndex) {
+    loadBlockDetails(blockIndex);
+}
+
+async function loadBlocks() {
+    try {
+        const data = await apiQuery('get_blocks');
+        displayBlocks(data.blocks || []);
+    } catch (error) {
+        console.error('加载区块数据失败:', error);
+        document.getElementById('blocks-list').innerHTML = `
+            <div class="list-group-item text-center py-3">
+                <p class="text-danger mb-0">加载区块数据失败，请刷新页面重试</p>
+            </div>
+        `;
+    }
+}
 });
 
 function loadBlocks() {
@@ -121,7 +153,7 @@ function displayBlocks(blocks) {
     blocksListEl.innerHTML = blocksHtml;
 }
 
-function loadBlockDetails(blockIndex) {
+async function loadBlockDetails(blockIndex) {
     // 显示加载状态
     document.getElementById('block-details').innerHTML = `
         <div class="text-center py-5">
@@ -132,28 +164,20 @@ function loadBlockDetails(blockIndex) {
         </div>
     `;
     
-    // 加载区块详情
-    fetch(`/api/block/${blockIndex}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('区块不存在');
-            }
-            return response.json();
-        })
-        .then(block => {
-            displayBlockDetails(block);
-            // 更新URL，不刷新页面
-            history.pushState(null, '', `/blocks?block=${blockIndex}`);
-        })
-        .catch(error => {
-            console.error('加载区块详情失败:', error);
-            document.getElementById('block-details').innerHTML = `
-                <div class="alert alert-danger" role="alert">
-                    <h4 class="alert-heading">加载失败</h4>
-                    <p>无法加载区块 #${blockIndex} 的详情: ${error.message}</p>
-                </div>
-            `;
-        });
+    // 使用统一API加载区块详情
+    try {
+        const block = await apiQuery('get_block', {index: parseInt(blockIndex)});
+        displayBlockDetails(block);
+        history.pushState(null, '', `/blocks?block=${blockIndex}`);
+    } catch (error) {
+        console.error('加载区块详情失败:', error);
+        document.getElementById('block-details').innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">加载失败</h4>
+                <p>无法加载区块 #${blockIndex} 的详情: ${error.message}</p>
+            </div>
+        `;
+    }
 }
 
 function displayBlockDetails(block) {

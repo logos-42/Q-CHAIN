@@ -248,6 +248,24 @@ let miningStartTime = 0;
 let miningAttempts = 0;
 let miningInterval = null;
 
+// 统一API调用函数
+async function apiQuery(action, params = {}) {
+    const response = await fetch('/api/v1/query', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            action: action,
+            params: params,
+            version: '1.0'
+        })
+    });
+    const result = await response.json();
+    if (result.code !== 0) {
+        throw new Error(result.message);
+    }
+    return result.data;
+}
+
 // 页面加载时获取状态
 document.addEventListener('DOMContentLoaded', function() {
     loadPQECStatus();
@@ -260,37 +278,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // 加载PQEC状态
-function loadPQECStatus() {
-    fetch('/api/pqec/status')
-        .then(response => response.json())
-        .then(data => {
-            if (data.difficulty) document.getElementById('difficulty').textContent = data.difficulty;
-            if (data.target_time) document.getElementById('target-time').textContent = data.target_time + 's';
-            if (data.block_reward) document.getElementById('block-reward').textContent = data.block_reward;
-            if (data.chain_status) document.getElementById('chain-status').textContent = data.chain_status;
-        })
-        .catch(err => console.log('使用默认共识参数'));
+async function loadPQECStatus() {
+    try {
+        const data = await apiQuery('pqec_status');
+        document.getElementById('difficulty').textContent = data.difficulty || 4;
+        document.getElementById('target-time').textContent = (data.target_time || 30) + 's';
+        document.getElementById('chain-status').textContent = data.qec_enabled ? '活跃' : '待激活';
+    } catch (err) {
+        console.log('使用默认共识参数');
+    }
 }
 
 // 加载统计信息
-function loadStatistics() {
-    fetch('/api/pqec/stats')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('total-blocks').textContent = data.total_blocks || 0;
-            document.getElementById('success-rate').textContent = (data.success_rate || 100) + '%';
-            document.getElementById('avg-mining-time').textContent = (data.avg_mining_time || 0) + 's';
-            document.getElementById('hash-rate').textContent = data.hash_rate || 0;
-            document.getElementById('valid-proofs').textContent = data.valid_proofs || 0;
-        })
-        .catch(err => {
-            // 使用API数据
-            fetch('/api/blockchain')
-                .then(r => r.json())
-                .then(data => {
-                    document.getElementById('total-blocks').textContent = data.length || 0;
-                });
-        });
+async function loadStatistics() {
+    try {
+        const data = await apiQuery('pqec_stats');
+        document.getElementById('total-blocks').textContent = data.total_blocks || 0;
+        document.getElementById('success-rate').textContent = ((data.success_rate || 1) * 100).toFixed(1) + '%';
+        document.getElementById('avg-mining-time').textContent = (data.avg_mining_time || 0).toFixed(2) + 's';
+    } catch (err) {
+        try {
+            const chainData = await apiQuery('get_blockchain');
+            document.getElementById('total-blocks').textContent = chainData.length || 0;
+        } catch(e) {}
+    }
 }
 
 // 开始挖矿
@@ -351,7 +362,7 @@ function stopMining() {
 }
 
 // 完成挖矿
-function completeMining(data) {
+async function completeMining(data) {
     stopMining();
     
     const proof = generateQuantumProof();
@@ -362,17 +373,17 @@ function completeMining(data) {
     document.getElementById('result-hash').textContent = hash;
     document.getElementById('mining-result-container').style.display = 'block';
     
-    // 发送到服务器
-    fetch('/api/pqec/mine', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({data: data, proof: proof})
-    })
-    .then(r => r.json())
-    .then(result => {
+    // 使用统一API挖矿
+    try {
+        const result = await apiQuery('pqec_mine', {
+            data: data,
+            difficulty: parseInt(document.getElementById('difficulty').textContent) || 3
+        });
         console.log('区块已创建:', result);
-    })
-    .catch(err => console.log('本地挖矿模拟'));
+        document.getElementById('result-proof').textContent = result.proof;
+    } catch (err) {
+        console.log('本地挖矿模拟');
+    }
 }
 
 // 生成模拟量子证明
@@ -396,7 +407,7 @@ function generateMockHash() {
 }
 
 // 验证Proof
-function verifyProof() {
+async function verifyProof() {
     const proof = document.getElementById('verify-proof').value.trim();
     const algorithm = document.getElementById('verify-algorithm').value;
     
@@ -409,70 +420,78 @@ function verifyProof() {
     document.getElementById('verify-result').innerHTML = 
         '<div class="text-center py-2"><div class="spinner-border spinner-border-sm"></div> 验证中...</div>';
     
-    fetch('/api/pqec/verify', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({proof: proof, algorithm: algorithm})
-    })
-    .then(response => response.json())
-    .then(data => {
+    try {
+        const data = await apiQuery('pqec_verify', {
+            proof: proof,
+            difficulty: 3
+        });
+        
         if (data.valid) {
             document.getElementById('verify-result').innerHTML = 
                 '<div class="alert alert-success">' +
                 '<i class="bi bi-check-circle"></i> <strong>验证通过</strong><br>' +
-                '算法: ' + algorithm.toUpperCase() + '<br>' +
-                '验证时间: ' + (data.verify_time || 0) + 'ms' +
+                '算法: ' + algorithm.toUpperCase() +
                 '</div>';
         } else {
             document.getElementById('verify-result').innerHTML = 
                 '<div class="alert alert-danger">' +
-                '<i class="bi bi-x-circle"></i> <strong>验证失败</strong><br>' +
-                (data.error || 'Proof无效或已过期') +
+                '<i class="bi bi-x-circle"></i> <strong>验证失败</strong>' +
                 '</div>';
         }
-    })
-    .catch(err => {
+    } catch (err) {
         // 本地模拟验证
         const isValid = proof.startsWith('0x') && proof.length >= 64;
         document.getElementById('verify-result').innerHTML = 
             isValid ? 
             '<div class="alert alert-success"><i class="bi bi-check-circle"></i> <strong>本地验证通过</strong></div>' :
             '<div class="alert alert-danger"><i class="bi bi-x-circle"></i> <strong>本地验证失败</strong></div>';
-    });
+    }
 }
 
 // 量子纠错模拟
-function simulateErrorCorrection() {
+async function simulateErrorCorrection() {
     const codeType = document.getElementById('error-correction-code').value;
     const errorRate = parseFloat(document.getElementById('error-rate').value) / 100;
     const qubitCount = parseInt(document.getElementById('qubit-count').value);
     
-    // 简化的纠错模拟
-    let logicalErrorRate;
-    let overhead;
-    
-    switch(codeType) {
-        case 'surface':
-            logicalErrorRate = Math.pow(errorRate, 3) * (qubitCount / 17);
-            overhead = Math.ceil(qubitCount * 1.5);
-            break;
-        case 'steane':
-            logicalErrorRate = Math.pow(errorRate, 2.5) * (qubitCount / 17);
-            overhead = Math.ceil(qubitCount * 2);
-            break;
-        case 'shor':
-            logicalErrorRate = Math.pow(errorRate, 2) * (qubitCount / 17);
-            overhead = Math.ceil(qubitCount * 3);
-            break;
-        case 'toric':
-            logicalErrorRate = Math.pow(errorRate, 4) * (qubitCount / 17);
-            overhead = Math.ceil(qubitCount * 2);
-            break;
+    // 使用统一API进行模拟
+    try {
+        const result = await apiQuery('pqec_simulate_error', {
+            code_type: codeType,
+            error_probability: errorRate
+        });
+        
+        document.getElementById('logical-error-rate').textContent = 
+            errorRate.toExponential(2);
+        document.getElementById('overhead').textContent = (result.num_qubits || qubitCount) + ' qubits';
+    } catch (err) {
+        // 备用本地计算
+        let logicalErrorRate;
+        let overhead;
+        
+        switch(codeType) {
+            case 'surface':
+                logicalErrorRate = Math.pow(errorRate, 3) * (qubitCount / 17);
+                overhead = Math.ceil(qubitCount * 1.5);
+                break;
+            case 'steane':
+                logicalErrorRate = Math.pow(errorRate, 2.5) * (qubitCount / 17);
+                overhead = Math.ceil(qubitCount * 2);
+                break;
+            case 'shor':
+                logicalErrorRate = Math.pow(errorRate, 2) * (qubitCount / 17);
+                overhead = Math.ceil(qubitCount * 3);
+                break;
+            default:
+                logicalErrorRate = Math.pow(errorRate, 2) * (qubitCount / 17);
+                overhead = Math.ceil(qubitCount * 3);
+        }
+        
+        document.getElementById('logical-error-rate').textContent = 
+            (logicalErrorRate * 100).toExponential(2);
+        document.getElementById('overhead').textContent = overhead + ' qubits';
     }
     
-    document.getElementById('logical-error-rate').textContent = 
-        (logicalErrorRate * 100).toExponential(2);
-    document.getElementById('overhead').textContent = overhead + ' qubits';
     document.getElementById('correction-result').style.display = 'block';
 }
 </script>

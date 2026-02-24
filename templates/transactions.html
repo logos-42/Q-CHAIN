@@ -78,14 +78,28 @@
 
 {% block extra_js %}
 <script>
+// 统一API调用函数
+async function apiQuery(action, params = {}) {
+    const response = await fetch('/api/v1/query', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            action: action,
+            params: params,
+            version: '1.0'
+        })
+    });
+    const result = await response.json();
+    if (result.code !== 0) {
+        throw new Error(result.message);
+    }
+    return result.data;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-    // 加载所有交易
     loadTransactions();
     
-    // 设置搜索按钮事件
     document.getElementById('search-btn').addEventListener('click', searchTransactions);
-    
-    // 设置搜索输入框回车事件
     document.getElementById('search-input').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             searchTransactions();
@@ -93,22 +107,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function loadTransactions() {
-    fetch('/api/transactions')
-        .then(response => response.json())
-        .then(transactions => {
-            displayTransactions(transactions);
-        })
-        .catch(error => {
-            console.error('加载交易数据失败:', error);
-            document.getElementById('transactions-table-body').innerHTML = `
-                <tr>
-                    <td colspan="5" class="text-center py-3">
-                        <p class="text-danger mb-0">加载交易数据失败，请刷新页面重试</p>
-                    </td>
-                </tr>
-            `;
-        });
+async function loadTransactions() {
+    try {
+        const data = await apiQuery('get_transactions');
+        displayTransactions(data.transactions || []);
+    } catch (error) {
+        console.error('加载交易数据失败:', error);
+        document.getElementById('transactions-table-body').innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-3">
+                    <p class="text-danger mb-0">加载交易数据失败，请刷新页面重试</p>
+                </td>
+            </tr>
+        `;
+    }
 }
 
 function displayTransactions(transactions) {
@@ -225,12 +237,10 @@ function searchTransactions() {
     const searchTerm = document.getElementById('search-input').value.trim();
     
     if (!searchTerm) {
-        // 如果搜索词为空，显示所有交易
         loadTransactions();
         return;
     }
     
-    // 显示加载状态
     document.getElementById('transactions-table-body').innerHTML = `
         <tr>
             <td colspan="5" class="text-center py-3">
@@ -242,9 +252,8 @@ function searchTransactions() {
         </tr>
     `;
     
-    // 搜索交易
-    fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`)
-        .then(response => response.json())
+    // 使用统一API搜索
+    apiQuery('search', {query: searchTerm})
         .then(results => {
             if (results.transactions && results.transactions.length > 0) {
                 displayTransactions(results.transactions);

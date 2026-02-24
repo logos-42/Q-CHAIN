@@ -13,6 +13,28 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.10" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Blockchain\Blockchain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Services\**\*.cs" Link="Services\%(Filename).cs" />
+    <Compile Include="..\Controllers\**\*.cs" Link="Controllers\%(Filename).cs" />
+    <Compile Include="..\Models\**\*.cs" Link="Models\%(Filename).cs" />
+    <Compile Include="..\Dtos\**\*.cs" Link="Dtos\%(Filename).cs" />
+    <Compile Include="..\Hubs\**\*.cs" Link="Hubs\%(Filename).cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="..\Models\ApiResponse.cs" />
+    <Compile Remove="..\Models\Blockchain.cs" />
+    <Compile Remove="..\Dtos\BlockDto.cs" />
+    <Compile Remove="..\Dtos\CreateBlockDto.cs" />
+    <Compile Remove="..\Dtos\TransactionDto.cs" />
+    <Compile Remove="..\Hubs\BlockchainHub.cs" />
   </ItemGroup>
 
 </Project>

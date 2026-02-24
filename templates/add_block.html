@@ -222,29 +222,42 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('add-transaction-btn').addEventListener('click', addTransactionForm);
     
     // 清空交易按钮事件
-    document.getElementById('clear-transactions-btn').addEventListener('click', clearTransactions);
-    
-    // 表单提交事件
-    document.getElementById('add-block-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        createNewBlock();
+// 统一API调用函数
+async function apiQuery(action, params = {}) {
+    const response = await fetch('/api/v1/query', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            action: action,
+            params: params,
+            version: '1.0'
+        })
     });
+    const result = await response.json();
+    if (result.code !== 0) {
+        throw new Error(result.message);
+    }
+    return result.data;
+}
+
+document.getElementById('clear-transactions-btn').addEventListener('click', clearTransactions);
+document.getElementById('add-block-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    createNewBlock();
 });
 
-function loadLatestBlockInfo() {
-    fetch('/api/block/latest')
-        .then(response => response.json())
-        .then(block => {
-            displayLatestBlockInfo(block);
-        })
-        .catch(error => {
-            console.error('加载最新区块信息失败:', error);
-            document.getElementById('latest-block-info').innerHTML = `
-                <div class="alert alert-danger mb-0">
-                    <p class="mb-0">加载区块信息失败，请刷新页面重试</p>
-                </div>
-            `;
-        });
+async function loadLatestBlockInfo() {
+    try {
+        const block = await apiQuery('get_latest_block');
+        displayLatestBlockInfo(block);
+    } catch (error) {
+        console.error('加载最新区块信息失败:', error);
+        document.getElementById('latest-block-info').innerHTML = `
+            <div class="alert alert-danger mb-0">
+                <p class="mb-0">加载区块信息失败，请刷新页面重试</p>
+            </div>
+        `;
+    }
 }
 
 function displayLatestBlockInfo(block) {
@@ -388,7 +401,7 @@ function clearTransactions() {
     }
 }
 
-function createNewBlock() {
+async function createNewBlock() {
     // 显示加载动画
     document.querySelector('button[type="submit"]').innerHTML = `
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -406,26 +419,13 @@ function createNewBlock() {
         transactions: transactions
     };
     
-    // 发送请求创建区块
-    fetch('/api/blocks/add', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(blockData)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.error || '创建区块失败');
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
+    // 使用统一API创建区块
+    try {
+        const data = await apiQuery('add_block', {data: blockData});
+        
         // 成功创建区块
         document.getElementById('success-block-index').textContent = data.block.index;
-        document.getElementById('success-block-time').textContent = data.block.timestamp_human;
+        document.getElementById('success-block-time').textContent = data.block.timestamp;
         document.getElementById('success-block-hash').textContent = data.block.hash;
         
         // 设置查看新区块按钮链接
@@ -440,13 +440,13 @@ function createNewBlock() {
         
         // 刷新最新区块信息
         loadLatestBlockInfo();
-    })
-    .catch(error => {
+    } catch (error) {
         // 显示错误模态框
         document.getElementById('error-message').textContent = error.message;
         new bootstrap.Modal(document.getElementById('errorModal')).show();
         console.error('区块创建失败:', error);
-    })
+    }
+}
     .finally(() => {
         // 恢复按钮状态
         document.querySelector('button[type="submit"]').innerHTML = '生成量子区块';

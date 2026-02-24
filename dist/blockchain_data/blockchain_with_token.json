@@ -1,0 +1,54 @@
+{
+    "chain": [
+        {
+            "index": 0,
+            "timestamp": 1743406337.2282765,
+            "data": {
+                "message": "创世区块",
+                "timestamp": "2025-03-31T15:32:17.228283",
+                "creator": "Blockchain创建者",
+                "creator_address": "a3782dcc8c145293bca80a1f372e4105c2aa5bd5138856df735823c4a973cd05",
+                "signature_key": "fd79490d5792cc4f3eb569250947fc9d3831d6fab133948afad89e5393f4a1b0",
+                "token_info": {
+                    "name": "MyToken",
+                    "symbol": "MTK",
+                    "total_supply": 100000000000,
+                    "initial_holder": "a3782dcc8c145293bca80a1f372e4105c2aa5bd5138856df735823c4a973cd05"
+                }
+            },
+            "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+            "signature": "1111110101111001010010010000110101010111100100101100110001001111001111101011010101101001001001010000100101000111111111001001110100111000001100011101011011111010101100010011001110010100100010101111101011011000100111100101001110010011111101001010000110110000",
+            "nonce": 45753,
+            "hash": "0000eca40af55db09b50a6a9adc4bf1255b7589a8fe45a5de7e1f3a956638901"
+        },
+        {
+            "index": 1,
+            "timestamp": 1743406338.3821564,
+            "data": {
+                "type": "token_transfer",
+                "sender": "a3782dcc8c145293bca80a1f372e4105c2aa5bd5138856df735823c4a973cd05",
+                "recipient": "a1dcca6bb433f831dfdbd7ed8e930189410243fde5cb690412ac44a71c5c5723",
+                "amount": 1000,
+                "token": "MTK",
+                "timestamp": 1743406338.382006,
+                "signature": "fef2dcbec07c1c4025b0fbbe8b210669595fbac5b00d3f7559ebec2a869c1678",
+                "public_key": "a3782dcc8c145293bca80a1f372e4105c2aa5bd5138856df735823c4a973cd05"
+            },
+            "previous_hash": "0000eca40af55db09b50a6a9adc4bf1255b7589a8fe45a5de7e1f3a956638901",
+            "signature": "fef2dcbec07c1c4025b0fbbe8b210669595fbac5b00d3f7559ebec2a869c1678",
+            "nonce": 10078,
+            "hash": "0000eee56c48c4ad9815f29f9548d298673225a288376f2e843234eb2a7df5b9"
+        }
+    ],
+    "token": {
+        "name": "MyToken",
+        "symbol": "MTK",
+        "decimals": 18,
+        "total_supply": 100000000000,
+        "balances": {
+            "a3782dcc8c145293bca80a1f372e4105c2aa5bd5138856df735823c4a973cd05": 99999999000,
+            "a1dcca6bb433f831dfdbd7ed8e930189410243fde5cb690412ac44a71c5c5723": 1000
+        },
+        "allowed": {}
+    }
+}

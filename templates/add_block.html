@@ -1,0 +1,568 @@
+{% extends "base.html" %}
+
+{% block title %}量子区块链 - 添加新区块{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="mb-0">添加新区块</h1>
+            <a href="/blocks" class="btn btn-outline-primary">返回区块浏览器</a>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7 mb-4 mb-lg-0">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">区块信息</h5>
+            </div>
+            <div class="card-body">
+                <form id="add-block-form">
+                    <div class="mb-3">
+                        <label for="block-message" class="form-label">区块消息</label>
+                        <input type="text" class="form-control" id="block-message" placeholder="输入区块消息">
+                        <div class="form-text">为这个区块添加一个简短的说明信息</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">交易信息</label>
+                        <div id="transactions-container">
+                            <!-- 交易表单将在这里动态添加 -->
+                            <div class="transaction-form card mb-3">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <span>交易 #1</span>
+                                    <div>
+                                        <select class="form-select transaction-type">
+                                            <option value="message">消息</option>
+                                            <option value="transfer">转账</option>
+                                            <option value="custom">自定义</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="card-body transaction-fields message-fields">
+                                    <div class="mb-3">
+                                        <label class="form-label">消息内容</label>
+                                        <textarea class="form-control message-content" rows="2"></textarea>
+                                    </div>
+                                </div>
+                                <div class="card-body transaction-fields transfer-fields d-none">
+                                    <div class="mb-3">
+                                        <label class="form-label">发送方</label>
+                                        <input type="text" class="form-control transfer-sender">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">接收方</label>
+                                        <input type="text" class="form-control transfer-recipient">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">金额 (QTC)</label>
+                                        <input type="number" class="form-control transfer-amount" min="0.00000001" step="0.00000001">
+                                    </div>
+                                </div>
+                                <div class="card-body transaction-fields custom-fields d-none">
+                                    <div class="mb-3">
+                                        <label class="form-label">自定义 JSON 数据</label>
+                                        <textarea class="form-control custom-data" rows="4" placeholder='{
+  "type": "custom",
+  "data": {
+    "key": "value"
+  }
+}'></textarea>
+                                        <div class="form-text">必须是有效的 JSON 格式</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-primary" id="add-transaction-btn">
+                                <i class="bi bi-plus-circle"></i> 添加交易
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" id="clear-transactions-btn">
+                                清空交易
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">生成量子区块</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">最新区块信息</h5>
+            </div>
+            <div class="card-body" id="latest-block-info">
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2 mb-0">正在加载最新区块信息...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">量子生成过程</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">区块生成过程使用以下量子特性：</p>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="bi bi-dice-5-fill text-primary me-2"></i>
+                        使用量子随机数生成器生成不可预测的熵
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-fingerprint text-primary me-2"></i>
+                        使用量子哈希函数计算区块哈希
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-key-fill text-primary me-2"></i>
+                        使用量子签名保证区块不可篡改
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-diagram-3-fill text-primary me-2"></i>
+                        创建分形Merkle树结构存储交易
+                    </li>
+                </ul>
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    新区块生成后，将自动添加到区块链，并可在区块浏览器中查看
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 成功模态框 -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">区块创建成功</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                </div>
+                <p>新区块已成功添加到量子区块链！</p>
+                <table class="table table-bordered mt-3">
+                    <tbody>
+                        <tr>
+                            <th width="100">区块高度</th>
+                            <td id="success-block-index">--</td>
+                        </tr>
+                        <tr>
+                            <th>创建时间</th>
+                            <td id="success-block-time">--</td>
+                        </tr>
+                        <tr>
+                            <th>区块哈希</th>
+                            <td id="success-block-hash" class="text-break hash-value">--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <a href="#" class="btn btn-primary" id="view-new-block-btn">查看新区块</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 错误模态框 -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">创建失败</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p>区块创建过程中发生错误：</p>
+                <div class="alert alert-danger" id="error-message">
+                    未知错误
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 加载最新区块信息
+    loadLatestBlockInfo();
+    
+    // 设置交易类型切换事件
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('transaction-type')) {
+            updateTransactionFields(e.target);
+        }
+    });
+    
+    // 添加交易按钮事件
+    document.getElementById('add-transaction-btn').addEventListener('click', addTransactionForm);
+    
+    // 清空交易按钮事件
+    document.getElementById('clear-transactions-btn').addEventListener('click', clearTransactions);
+    
+    // 表单提交事件
+    document.getElementById('add-block-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createNewBlock();
+    });
+});
+
+function loadLatestBlockInfo() {
+    fetch('/api/block/latest')
+        .then(response => response.json())
+        .then(block => {
+            displayLatestBlockInfo(block);
+        })
+        .catch(error => {
+            console.error('加载最新区块信息失败:', error);
+            document.getElementById('latest-block-info').innerHTML = `
+                <div class="alert alert-danger mb-0">
+                    <p class="mb-0">加载区块信息失败，请刷新页面重试</p>
+                </div>
+            `;
+        });
+}
+
+function displayLatestBlockInfo(block) {
+    document.getElementById('latest-block-info').innerHTML = `
+        <h6>区块 #${block.index}</h6>
+        <table class="table table-bordered mb-0">
+            <tbody>
+                <tr>
+                    <th width="100">哈希</th>
+                    <td class="text-break">
+                        <span class="hash-value">${block.hash.substring(0, 16)}...</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>时间戳</th>
+                    <td>${block.timestamp_human}</td>
+                </tr>
+                <tr>
+                    <th>交易数量</th>
+                    <td>${block.data && block.data.transactions ? block.data.transactions.length : 0}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="d-grid mt-3">
+            <a href="/blocks?block=${block.index}" class="btn btn-sm btn-outline-primary">
+                查看完整区块详情
+            </a>
+        </div>
+    `;
+}
+
+function updateTransactionFields(selectElement) {
+    const transactionCard = selectElement.closest('.transaction-form');
+    const transactionType = selectElement.value;
+    
+    // 隐藏所有字段
+    transactionCard.querySelectorAll('.transaction-fields').forEach(fieldsDiv => {
+        fieldsDiv.classList.add('d-none');
+    });
+    
+    // 显示选中类型的字段
+    transactionCard.querySelector(`.${transactionType}-fields`).classList.remove('d-none');
+}
+
+function addTransactionForm() {
+    const container = document.getElementById('transactions-container');
+    const transactionCount = container.querySelectorAll('.transaction-form').length + 1;
+    
+    const newTransactionForm = document.createElement('div');
+    newTransactionForm.className = 'transaction-form card mb-3';
+    newTransactionForm.innerHTML = `
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span>交易 #${transactionCount}</span>
+            <div class="d-flex">
+                <select class="form-select transaction-type me-2">
+                    <option value="message">消息</option>
+                    <option value="transfer">转账</option>
+                    <option value="custom">自定义</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-transaction-btn">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+        <div class="card-body transaction-fields message-fields">
+            <div class="mb-3">
+                <label class="form-label">消息内容</label>
+                <textarea class="form-control message-content" rows="2"></textarea>
+            </div>
+        </div>
+        <div class="card-body transaction-fields transfer-fields d-none">
+            <div class="mb-3">
+                <label class="form-label">发送方</label>
+                <input type="text" class="form-control transfer-sender">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">接收方</label>
+                <input type="text" class="form-control transfer-recipient">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">金额 (QTC)</label>
+                <input type="number" class="form-control transfer-amount" min="0.00000001" step="0.00000001">
+            </div>
+        </div>
+        <div class="card-body transaction-fields custom-fields d-none">
+            <div class="mb-3">
+                <label class="form-label">自定义 JSON 数据</label>
+                <textarea class="form-control custom-data" rows="4" placeholder='{
+  "type": "custom",
+  "data": {
+    "key": "value"
+  }
+}'></textarea>
+                <div class="form-text">必须是有效的 JSON 格式</div>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(newTransactionForm);
+    
+    // 设置删除按钮事件
+    newTransactionForm.querySelector('.remove-transaction-btn').addEventListener('click', function() {
+        newTransactionForm.remove();
+        updateTransactionNumbers();
+    });
+}
+
+function updateTransactionNumbers() {
+    const transactionForms = document.querySelectorAll('.transaction-form');
+    
+    transactionForms.forEach((form, index) => {
+        form.querySelector('.card-header span').textContent = `交易 #${index + 1}`;
+    });
+}
+
+function clearTransactions() {
+    const container = document.getElementById('transactions-container');
+    
+    // 保留第一个交易表单，清空其中内容
+    const firstForm = container.querySelector('.transaction-form');
+    
+    if (firstForm) {
+        // 重置类型为 message
+        firstForm.querySelector('.transaction-type').value = 'message';
+        
+        // 隐藏所有字段
+        firstForm.querySelectorAll('.transaction-fields').forEach(fieldsDiv => {
+            fieldsDiv.classList.add('d-none');
+        });
+        
+        // 显示 message 字段
+        firstForm.querySelector('.message-fields').classList.remove('d-none');
+        
+        // 清空消息内容
+        firstForm.querySelector('.message-content').value = '';
+        
+        // 移除其他所有交易表单
+        container.querySelectorAll('.transaction-form:not(:first-child)').forEach(form => {
+            form.remove();
+        });
+    }
+}
+
+function createNewBlock() {
+    // 显示加载动画
+    document.querySelector('button[type="submit"]').innerHTML = `
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        正在生成区块...
+    `;
+    document.querySelector('button[type="submit"]').disabled = true;
+    
+    // 收集区块数据
+    const blockMessage = document.getElementById('block-message').value.trim() || '新区块';
+    const transactions = collectTransactions();
+    
+    // 准备请求数据
+    const blockData = {
+        message: blockMessage,
+        transactions: transactions
+    };
+    
+    // 发送请求创建区块
+    fetch('/api/blocks/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(blockData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.error || '创建区块失败');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 成功创建区块
+        document.getElementById('success-block-index').textContent = data.block.index;
+        document.getElementById('success-block-time').textContent = data.block.timestamp_human;
+        document.getElementById('success-block-hash').textContent = data.block.hash;
+        
+        // 设置查看新区块按钮链接
+        document.getElementById('view-new-block-btn').href = `/blocks?block=${data.block.index}`;
+        
+        // 显示成功模态框
+        new bootstrap.Modal(document.getElementById('successModal')).show();
+        
+        // 清空表单
+        document.getElementById('block-message').value = '';
+        clearTransactions();
+        
+        // 刷新最新区块信息
+        loadLatestBlockInfo();
+    })
+    .catch(error => {
+        // 显示错误模态框
+        document.getElementById('error-message').textContent = error.message;
+        new bootstrap.Modal(document.getElementById('errorModal')).show();
+        console.error('区块创建失败:', error);
+    })
+    .finally(() => {
+        // 恢复按钮状态
+        document.querySelector('button[type="submit"]').innerHTML = '生成量子区块';
+        document.querySelector('button[type="submit"]').disabled = false;
+    });
+}
+
+function collectTransactions() {
+    const transactions = [];
+    const transactionForms = document.querySelectorAll('.transaction-form');
+    
+    transactionForms.forEach(form => {
+        const type = form.querySelector('.transaction-type').value;
+        let transaction = {
+            type: type,
+            timestamp: Date.now() / 1000
+        };
+        
+        if (type === 'message') {
+            const content = form.querySelector('.message-content').value.trim();
+            if (content) {
+                transaction.content = content;
+                transactions.push(transaction);
+            }
+        } else if (type === 'transfer') {
+            const sender = form.querySelector('.transfer-sender').value.trim();
+            const recipient = form.querySelector('.transfer-recipient').value.trim();
+            const amount = parseFloat(form.querySelector('.transfer-amount').value);
+            
+            if (recipient && amount > 0) {
+                transaction.sender = sender || '未知发送方';
+                transaction.recipient = recipient;
+                transaction.amount = amount;
+                transactions.push(transaction);
+            }
+        } else if (type === 'custom') {
+            try {
+                const customData = JSON.parse(form.querySelector('.custom-data').value.trim());
+                // 合并自定义数据到交易对象
+                transaction = { ...transaction, ...customData };
+                transactions.push(transaction);
+            } catch (e) {
+                console.error('无效的JSON数据:', e);
+                // 忽略无效的自定义交易
+            }
+        }
+    });
+    
+    return transactions;
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hash-value {
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.transaction-form .card-header {
+    padding: 0.5rem 1rem;
+}
+
+.transaction-form .transaction-type {
+    width: auto;
+    min-width: 120px;
+}
+
+#add-transaction-btn i,
+#clear-transactions-btn i {
+    margin-right: 0.25rem;
+}
+
+.bi::before {
+    display: inline-block;
+    content: "";
+    vertical-align: -.125em;
+    background-repeat: no-repeat;
+    background-size: 1rem 1rem;
+}
+
+.bi-plus-circle::before {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-plus-circle' viewBox='0 0 16 16'><path d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/><path d='M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z'/></svg>");
+}
+
+.bi-trash::before {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-trash' viewBox='0 0 16 16'><path d='M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z'/><path d='M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z'/></svg>");
+}
+
+.bi-dice-5-fill::before {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-dice-5-fill' viewBox='0 0 16 16'><path d='M3 0a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V3a3 3 0 0 0-3-3H3zm2.5 4a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm8 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM8 13.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zM13 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z'/></svg>");
+}
+
+.bi-fingerprint::before {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-fingerprint' viewBox='0 0 16 16'><path d='M8.06 6.5a.5.5 0 0 1 .5.5v.776a11.5 11.5 0 0 1-.552 3.519l-1.331 4.14a.5.5 0 0 1-.952-.305l1.33-4.141a10.5 10.5 0 0 0 .504-3.213V7a.5.5 0 0 1 .5-.5Z'/><path d='M6.06 7a2 2 0 1 1 4 0 .5.5 0 1 1-1 0 1 1 0 1 0-2 0v.332c0 .409-.022.816-.066 1.221A.5.5 0 0 1 6 8.447c.04-.37.06-.742.06-1.115V7Zm3.509 1a.5.5 0 0 1 .487.513 11.5 11.5 0 0 1-.587 3.339l-1.266 3.8a.5.5 0 0 1-.949-.317l1.267-3.8a10.5 10.5 0 0 0 .535-3.048A.5.5 0 0 1 9.569 8Zm-3.356 2.115a.5.5 0 0 1 .33.626L5.24 14.939a.5.5 0 1 1-.955-.296l1.303-4.199a.5.5 0 0 1 .625-.329Z'/><path d='M4.759 5.833A3.501 3.501 0 0 1 11.559 7a.5.5 0 0 1-1 0 2.5 2.5 0 0 0-4.857-.833.5.5 0 1 1-.943-.334Zm.3 1.67a.5.5 0 0 1 .449.546 10.72 10.72 0 0 1-.4 2.031l-1.222 4.072a.5.5 0 1 1-.958-.287L4.15 9.793a9.72 9.72 0 0 0 .363-1.842.5.5 0 0 1 .546-.449Zm6 .647a.5.5 0 0 1 .5.5c0 1.28-.213 2.552-.632 3.762l-1.09 3.145a.5.5 0 0 1-.944-.327l1.089-3.145c.382-1.105.578-2.266.578-3.435a.5.5 0 0 1 .5-.5Z'/><path d='M3.902 4.222a4.996 4.996 0 0 1 5.202-2.113.5.5 0 0 1-.208.979 3.996 3.996 0 0 0-4.163 1.69.5.5 0 0 1-.831-.556Zm6.72-.955a.5.5 0 0 1 .705-.052A4.99 4.99 0 0 1 13.059 7v1.5a.5.5 0 1 1-1 0V7c0-1.351-.551-2.57-1.432-3.46a.5.5 0 0 1-.052-.705ZM3.68 5.304a.5.5 0 0 1 .6.368 3.496 3.496 0 0 0 1.392 2.198.5.5 0 0 1-.64.765c-.809-.675-1.412-1.598-1.719-2.575a.5.5 0 0 1 .367-.606Z'/><path d='M4 8.5a.5.5 0 0 1 .5-.5h1.75c.979 0 1.865-.673 1.925-1.65A2 2 0 0 0 6.15 4.415a.5.5 0 1 1 .342-.894A3 3 0 0 1 8.224 7.5H4.5a.5.5 0 0 1-.5-.5Z'/></svg>");
+}
+
+.bi-key-fill::before {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-key-fill' viewBox='0 0 16 16'><path d='M3.5 11.5a3.5 3.5 0 1 1 3.163-5H14L15.5 8 14 9.5l-1-1-1 1-1-1-1 1-1-1-1 1H6.663a3.5 3.5 0 0 1-3.163 2zM2.5 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2z'/></svg>");
+}
+
+.bi-diagram-3-fill::before {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-diagram-3-fill' viewBox='0 0 16 16'><path fill-rule='evenodd' d='M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 2 7h5.5V6A1.5 1.5 0 0 1 6 4.5v-1zm-6 8A1.5 1.5 0 0 1 1.5 10h1A1.5 1.5 0 0 1 4 11.5v1A1.5 1.5 0 0 1 2.5 14h-1A1.5 1.5 0 0 1 0 12.5v-1zm6 0A1.5 1.5 0 0 1 7.5 10h1a1.5 1.5 0 0 1 1.5 1.5v1A1.5 1.5 0 0 1 8.5 14h-1A1.5 1.5 0 0 1 6 12.5v-1zm6 0a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-1z'/></svg>");
+}
+
+.bi-info-circle-fill::before {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-info-circle-fill' viewBox='0 0 16 16'><path d='M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z'/></svg>");
+}
+
+.bi-check-circle-fill::before {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-check-circle-fill' viewBox='0 0 16 16'><path d='M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z'/></svg>");
+}
+
+.bi-exclamation-triangle-fill::before {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-exclamation-triangle-fill' viewBox='0 0 16 16'><path d='M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z'/></svg>");
+}
+</style>
+{% endblock %} 

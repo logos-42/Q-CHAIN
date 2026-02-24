@@ -6,6 +6,7 @@ namespace QuantumBlockchain.QEC {
     open Microsoft.Quantum.Math;
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Logical;
+    open Microsoft.Quantum.Random;
 
     newtype SurfaceCodeConfig = (
         distance: Int,

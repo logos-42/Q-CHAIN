@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}量子区块链 - 主页{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card bg-primary text-white shadow-lg">
+            <div class="card-body p-4">
+                <h1 class="display-5 fw-bold mb-3">量子区块链浏览器</h1>
+                <p class="lead">基于量子计算原理的新一代区块链技术演示平台</p>
+                <p>本平台融合了QPanda（华为量子计算框架）和Q#（微软量子语言）的概念，通过Qiskit进行实现。</p>
+                <div class="mt-3">
+                    <a href="/blocks" class="btn btn-light me-2">查看区块</a>
+                    <a href="/add-block" class="btn btn-outline-light">添加区块</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4 mb-lg-0">
+        <div class="card h-100 shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">区块链概况</h5>
+            </div>
+            <div class="card-body">
+                <div class="dashboard-stats">
+                    <div class="stat-item" id="total-blocks">
+                        <h3>--</h3>
+                        <p>总区块数</p>
+                    </div>
+                    <div class="stat-item" id="total-transactions">
+                        <h3>--</h3>
+                        <p>总交易数</p>
+                    </div>
+                    <div class="stat-item" id="latest-block">
+                        <h3>--</h3>
+                        <p>最新区块高度</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100 shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">最新区块</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="latest-blocks-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>高度</th>
+                                <th>时间</th>
+                                <th>交易数</th>
+                                <th>哈希</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" class="text-center py-3">加载中...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/blocks" class="btn btn-sm btn-primary">查看所有区块</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">量子特性</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-4 mb-md-0">
+                        <h5>量子增强的区块链技术</h5>
+                        <ul class="feature-list">
+                            <li><strong>量子随机数生成器</strong>：使用量子叠加态生成高质量随机数</li>
+                            <li><strong>量子哈希函数</strong>：结合经典哈希和量子态测量</li>
+                            <li><strong>量子签名</strong>：基于量子态的不可伪造签名算法</li>
+                            <li><strong>分形Merkle树</strong>：结合量子随机性的分形结构实现</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>量子计算优势</h5>
+                        <div class="chart-container">
+                            <canvas id="quantum-advantage-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 加载区块链数据
+    fetch('/api/blockchain')
+        .then(response => response.json())
+        .then(data => {
+            // 更新区块链概况
+            document.getElementById('total-blocks').querySelector('h3').textContent = data.length;
+            document.getElementById('latest-block').querySelector('h3').textContent = data.length > 0 ? 
+                data.chain[data.length - 1].index : 0;
+            
+            // 计算总交易数
+            let totalTx = 0;
+            data.chain.forEach(block => {
+                if (block.data && block.data.transactions) {
+                    totalTx += block.data.transactions.length;
+                }
+            });
+            document.getElementById('total-transactions').querySelector('h3').textContent = totalTx;
+            
+            // 更新最新区块表格
+            updateLatestBlocksTable(data.chain.slice(-5).reverse());
+        })
+        .catch(error => {
+            console.error('加载区块链数据失败:', error);
+        });
+    
+    // 绘制量子优势图表
+    const ctx = document.getElementById('quantum-advantage-chart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['哈希计算', '密钥生成', '签名验证', '挖矿过程'],
+            datasets: [{
+                label: '经典计算',
+                data: [100, 100, 100, 100],
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }, {
+                label: '量子计算',
+                data: [85, 40, 60, 20],
+                backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: '相对计算时间 (%)'
+                    }
+                }
+            }
+        }
+    });
+});
+
+function updateLatestBlocksTable(blocks) {
+    const tableBody = document.querySelector('#latest-blocks-table tbody');
+    tableBody.innerHTML = '';
+    
+    if (blocks.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="4" class="text-center py-3">暂无区块数据</td>';
+        tableBody.appendChild(row);
+        return;
+    }
+    
+    blocks.forEach(block => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <a href="/blocks?block=${block.index}" class="text-decoration-none">
+                    ${block.index}
+                </a>
+            </td>
+            <td>${new Date(block.timestamp * 1000).toLocaleString()}</td>
+            <td>${block.data && block.data.transactions ? block.data.transactions.length : 0}</td>
+            <td>
+                <span class="hash-value" title="${block.hash}">
+                    ${block.hash.substring(0, 10)}...
+                </span>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-stats {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+}
+
+.stat-item {
+    flex: 1;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+}
+
+.stat-item h3 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+    color: #0d6efd;
+}
+
+.feature-list {
+    padding-left: 20px;
+}
+
+.feature-list li {
+    margin-bottom: 10px;
+}
+
+.chart-container {
+    height: 250px;
+}
+
+.hash-value {
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+</style>
+{% endblock %} 

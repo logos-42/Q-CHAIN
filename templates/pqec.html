@@ -1,0 +1,573 @@
+{% extends "base.html" %}
+
+{% block title %}PQEC共识机制 - 量子区块链{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="mb-0">
+            <i class="bi bi-diagram-3"></i> PQEC 共识机制
+        </h1>
+        <p class="text-muted">Post-Quantum Error Correction - 后量子时代纠错共识</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 左侧：共识信息和挖矿 -->
+    <div class="col-lg-8">
+        <!-- 共识状态卡片 -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-gradient quantum-header">
+                <h5 class="mb-0"><i class="bi bi-speedometer2"></i> 共识状态</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="stat-card">
+                            <h3 class="stat-value" id="difficulty">4</h3>
+                            <p class="stat-label">当前难度</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="stat-card">
+                            <h3 class="stat-value" id="target-time">30s</h3>
+                            <p class="stat-label">目标出块时间</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="stat-card">
+                            <h3 class="stat-value" id="block-reward">50</h3>
+                            <p class="stat-label">区块奖励</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                        <div class="stat-card">
+                            <h3 class="stat-value" id="chain-status">活跃</h3>
+                            <p class="stat-label">链状态</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 挖矿面板 -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-gradient quantum-header">
+                <h5 class="mb-0"><i class="bi bi-hammer"></i> 量子挖矿</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label">区块数据</label>
+                            <input type="text" class="form-control" id="mine-data" 
+                                   placeholder="输入区块数据..." value="量子区块数据">
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <button class="btn btn-lg btn-mining" id="mine-btn" onclick="startMining()">
+                            <i class="bi bi-play-fill"></i> 开始挖矿
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 挖矿进度 -->
+                <div class="mt-4" id="mining-progress-container" style="display: none;">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>挖矿进度</span>
+                        <span id="mining-status">正在计算量子证明...</span>
+                    </div>
+                    <div class="progress quantum-progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" id="mining-progress" style="width: 0%"></div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-4 text-center">
+                            <small class="text-muted">尝试次数</small>
+                            <div id="attempts">0</div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <small class="text-muted">当前哈希</small>
+                            <div class="hash-small" id="current-hash">-</div>
+                        </div>
+                        <div class="col-4 text-center">
+                            <small class="text-muted">耗时</small>
+                            <div id="mining-time">0s</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 挖矿结果 -->
+                <div class="mt-4" id="mining-result-container" style="display: none;">
+                    <div class="alert alert-success">
+                        <h6><i class="bi bi-check-circle"></i> 挖矿成功！</h6>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">量子证明 (Quantum Proof)</small>
+                                <code class="d-block" id="result-proof"></code>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted">区块哈希</small>
+                                <code class="d-block" id="result-hash"></code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 验证器 -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-gradient quantum-header">
+                <h5 class="mb-0"><i class="bi bi-shield-check"></i> PQEC 验证器</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">输入 Quantum Proof 进行验证</label>
+                    <textarea class="form-control font-monospace" id="verify-proof" 
+                              rows="3" placeholder="粘贴proof内容..."></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <select class="form-select" id="verify-algorithm">
+                            <option value="dilithium">Dilithium (CRYSTALS-Dilithium)</option>
+                            <option value="kyber">Kyber (CRYSTALS-Kyber)</option>
+                            <option value="sphincs">SPHINCS+</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <button class="btn btn-verification w-100" onclick="verifyProof()">
+                            <i class="bi bi-patch-check"></i> 验证 Proof
+                        </button>
+                    </div>
+                </div>
+                <div id="verify-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧：量子纠错和统计 -->
+    <div class="col-lg-4">
+        <!-- 量子纠错模拟器 -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-gradient quantum-header">
+                <h5 class="mb-0"><i class="bi bi-bug"></i> 量子纠错模拟器</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">纠错码类型</label>
+                    <select class="form-select" id="error-correction-code">
+                        <option value="surface">表面码 (Surface Code)</option>
+                        <option value="steane">Steane码</option>
+                        <option value="shor">Shor码</option>
+                        <option value="toric">拓扑码 (Toric Code)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">物理错误率</label>
+                    <input type="range" class="form-range" id="error-rate" 
+                           min="0.1" max="10" step="0.1" value="1">
+                    <div class="text-end"><span id="error-rate-display">1</span>%</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">量子比特数</label>
+                    <input type="number" class="form-control" id="qubit-count" 
+                           value="17" min="1" max="1000">
+                </div>
+                <button class="btn btn-correction w-100 mb-3" onclick="simulateErrorCorrection()">
+                    <i class="bi bi-wrench-adjustable"></i> 运行纠错模拟
+                </button>
+                
+                <!-- 纠错结果 -->
+                <div id="correction-result" style="display: none;">
+                    <div class="alert alert-info">
+                        <h6>纠错结果</h6>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="h4 text-success" id="logical-error-rate">-</div>
+                                <small>逻辑错误率</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="h4 text-primary" id="overhead">-</div>
+                                <small>开销比率</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计面板 -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-gradient quantum-header">
+                <h5 class="mb-0"><i class="bi bi-graph-up"></i> 统计面板</h5>
+            </div>
+            <div class="card-body">
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="bi bi-box"></i> 总区块数</span>
+                        <span class="stat-number" id="total-blocks">0</span>
+                    </div>
+                </div>
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="bi bi-check2-all"></i> 验证成功率</span>
+                        <span class="stat-number" id="success-rate">100%</span>
+                    </div>
+                </div>
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="bi bi-clock"></i> 平均挖矿时间</span>
+                        <span class="stat-number" id="avg-mining-time">0s</span>
+                    </div>
+                </div>
+                <div class="stat-item mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="bi bi-lightning"></i> 算力 (H/s)</span>
+                        <span class="stat-number" id="hash-rate">0</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="d-flex justify-content-between">
+                        <span><i class="bi bi-shield"></i> 有效 Proof 数</span>
+                        <span class="stat-number" id="valid-proofs">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let isMining = false;
+let miningStartTime = 0;
+let miningAttempts = 0;
+let miningInterval = null;
+
+// 页面加载时获取状态
+document.addEventListener('DOMContentLoaded', function() {
+    loadPQECStatus();
+    loadStatistics();
+    
+    // 更新错误率显示
+    document.getElementById('error-rate').addEventListener('input', function() {
+        document.getElementById('error-rate-display').textContent = this.value;
+    });
+});
+
+// 加载PQEC状态
+function loadPQECStatus() {
+    fetch('/api/pqec/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.difficulty) document.getElementById('difficulty').textContent = data.difficulty;
+            if (data.target_time) document.getElementById('target-time').textContent = data.target_time + 's';
+            if (data.block_reward) document.getElementById('block-reward').textContent = data.block_reward;
+            if (data.chain_status) document.getElementById('chain-status').textContent = data.chain_status;
+        })
+        .catch(err => console.log('使用默认共识参数'));
+}
+
+// 加载统计信息
+function loadStatistics() {
+    fetch('/api/pqec/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total-blocks').textContent = data.total_blocks || 0;
+            document.getElementById('success-rate').textContent = (data.success_rate || 100) + '%';
+            document.getElementById('avg-mining-time').textContent = (data.avg_mining_time || 0) + 's';
+            document.getElementById('hash-rate').textContent = data.hash_rate || 0;
+            document.getElementById('valid-proofs').textContent = data.valid_proofs || 0;
+        })
+        .catch(err => {
+            // 使用API数据
+            fetch('/api/blockchain')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('total-blocks').textContent = data.length || 0;
+                });
+        });
+}
+
+// 开始挖矿
+function startMining() {
+    if (isMining) {
+        stopMining();
+        return;
+    }
+    
+    const data = document.getElementById('mine-data').value;
+    
+    isMining = true;
+    miningStartTime = Date.now();
+    miningAttempts = 0;
+    
+    document.getElementById('mine-btn').innerHTML = '<i class="bi bi-stop-fill"></i> 停止挖矿';
+    document.getElementById('mine-btn').classList.remove('btn-mining');
+    document.getElementById('mine-btn').classList.add('btn-danger');
+    document.getElementById('mining-progress-container').style.display = 'block';
+    document.getElementById('mining-result-container').style.display = 'none';
+    
+    // 模拟挖矿进度
+    let progress = 0;
+    miningInterval = setInterval(() => {
+        miningAttempts++;
+        
+        // 更新进度
+        progress += Math.random() * 5;
+        if (progress > 100) progress = 100;
+        
+        document.getElementById('mining-progress').style.width = progress + '%';
+        document.getElementById('attempts').textContent = miningAttempts;
+        document.getElementById('mining-time').textContent = ((Date.now() - miningStartTime) / 1000).toFixed(1) + 's';
+        
+        // 模拟当前哈希
+        const mockHash = generateMockHash();
+        document.getElementById('current-hash').textContent = mockHash.substring(0, 12) + '...';
+        
+        // 检查是否达到目标（模拟）
+        if (progress >= 100) {
+            completeMining(data);
+        }
+    }, 200);
+}
+
+// 停止挖矿
+function stopMining() {
+    isMining = false;
+    if (miningInterval) {
+        clearInterval(miningInterval);
+        miningInterval = null;
+    }
+    
+    document.getElementById('mine-btn').innerHTML = '<i class="bi bi-play-fill"></i> 开始挖矿';
+    document.getElementById('mine-btn').classList.remove('btn-danger');
+    document.getElementById('mine-btn').classList.add('btn-mining');
+    document.getElementById('mining-status').textContent = '已停止';
+}
+
+// 完成挖矿
+function completeMining(data) {
+    stopMining();
+    
+    const proof = generateQuantumProof();
+    const hash = generateMockHash();
+    
+    document.getElementById('mining-status').textContent = '挖矿完成！';
+    document.getElementById('result-proof').textContent = proof;
+    document.getElementById('result-hash').textContent = hash;
+    document.getElementById('mining-result-container').style.display = 'block';
+    
+    // 发送到服务器
+    fetch('/api/pqec/mine', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({data: data, proof: proof})
+    })
+    .then(r => r.json())
+    .then(result => {
+        console.log('区块已创建:', result);
+    })
+    .catch(err => console.log('本地挖矿模拟'));
+}
+
+// 生成模拟量子证明
+function generateQuantumProof() {
+    const chars = '0123456789ABCDEF';
+    let proof = '0x';
+    for (let i = 0; i < 64; i++) {
+        proof += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return proof;
+}
+
+// 生成模拟哈希
+function generateMockHash() {
+    const chars = '0123456789ABCDEF';
+    let hash = '';
+    for (let i = 0; i < 64; i++) {
+        hash += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return hash;
+}
+
+// 验证Proof
+function verifyProof() {
+    const proof = document.getElementById('verify-proof').value.trim();
+    const algorithm = document.getElementById('verify-algorithm').value;
+    
+    if (!proof) {
+        document.getElementById('verify-result').innerHTML = 
+            '<div class="alert alert-warning">请输入要验证的Proof</div>';
+        return;
+    }
+    
+    document.getElementById('verify-result').innerHTML = 
+        '<div class="text-center py-2"><div class="spinner-border spinner-border-sm"></div> 验证中...</div>';
+    
+    fetch('/api/pqec/verify', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({proof: proof, algorithm: algorithm})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            document.getElementById('verify-result').innerHTML = 
+                '<div class="alert alert-success">' +
+                '<i class="bi bi-check-circle"></i> <strong>验证通过</strong><br>' +
+                '算法: ' + algorithm.toUpperCase() + '<br>' +
+                '验证时间: ' + (data.verify_time || 0) + 'ms' +
+                '</div>';
+        } else {
+            document.getElementById('verify-result').innerHTML = 
+                '<div class="alert alert-danger">' +
+                '<i class="bi bi-x-circle"></i> <strong>验证失败</strong><br>' +
+                (data.error || 'Proof无效或已过期') +
+                '</div>';
+        }
+    })
+    .catch(err => {
+        // 本地模拟验证
+        const isValid = proof.startsWith('0x') && proof.length >= 64;
+        document.getElementById('verify-result').innerHTML = 
+            isValid ? 
+            '<div class="alert alert-success"><i class="bi bi-check-circle"></i> <strong>本地验证通过</strong></div>' :
+            '<div class="alert alert-danger"><i class="bi bi-x-circle"></i> <strong>本地验证失败</strong></div>';
+    });
+}
+
+// 量子纠错模拟
+function simulateErrorCorrection() {
+    const codeType = document.getElementById('error-correction-code').value;
+    const errorRate = parseFloat(document.getElementById('error-rate').value) / 100;
+    const qubitCount = parseInt(document.getElementById('qubit-count').value);
+    
+    // 简化的纠错模拟
+    let logicalErrorRate;
+    let overhead;
+    
+    switch(codeType) {
+        case 'surface':
+            logicalErrorRate = Math.pow(errorRate, 3) * (qubitCount / 17);
+            overhead = Math.ceil(qubitCount * 1.5);
+            break;
+        case 'steane':
+            logicalErrorRate = Math.pow(errorRate, 2.5) * (qubitCount / 17);
+            overhead = Math.ceil(qubitCount * 2);
+            break;
+        case 'shor':
+            logicalErrorRate = Math.pow(errorRate, 2) * (qubitCount / 17);
+            overhead = Math.ceil(qubitCount * 3);
+            break;
+        case 'toric':
+            logicalErrorRate = Math.pow(errorRate, 4) * (qubitCount / 17);
+            overhead = Math.ceil(qubitCount * 2);
+            break;
+    }
+    
+    document.getElementById('logical-error-rate').textContent = 
+        (logicalErrorRate * 100).toExponential(2);
+    document.getElementById('overhead').textContent = overhead + ' qubits';
+    document.getElementById('correction-result').style.display = 'block';
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.quantum-header {
+    background: linear-gradient(135deg, #1a237e 0%, #4a148c 100%);
+    color: white;
+}
+
+.bg-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-card {
+    padding: 15px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #1a237e;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0;
+}
+
+.btn-mining {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-mining:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-verification {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    border: none;
+    color: white;
+}
+
+.btn-correction {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    border: none;
+    color: white;
+}
+
+.quantum-progress .progress-bar {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.hash-small {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #666;
+    word-break: break-all;
+}
+
+.stat-item {
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    border-left: 3px solid #667eea;
+}
+
+.stat-number {
+    font-weight: bold;
+    color: #1a237e;
+}
+
+code {
+    background: #f4f4f4;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    word-break: break-all;
+}
+
+.font-monospace {
+    font-family: 'Courier New', monospace;
+}
+</style>
+{% endblock %}

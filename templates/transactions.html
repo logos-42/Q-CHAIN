@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}量子区块链 - 交易浏览器{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="mb-0">交易浏览器</h1>
+            <div class="input-group" style="max-width: 300px;">
+                <input type="text" id="search-input" class="form-control" placeholder="搜索交易内容...">
+                <button class="btn btn-primary" id="search-btn">搜索</button>
+            </div>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">交易列表</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>区块高度</th>
+                                <th>类型</th>
+                                <th>内容</th>
+                                <th>时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-table-body">
+                            <tr>
+                                <td colspan="5" class="text-center py-3">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">加载中...</span>
+                                    </div>
+                                    <p class="mt-2 mb-0">正在加载交易数据...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 交易详情模态框 -->
+<div class="modal fade" id="txModal" tabindex="-1" aria-labelledby="txModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="txModalLabel">交易详情</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body" id="tx-details">
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2 mb-0">正在加载交易详情...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="view-block-btn">查看所在区块</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 加载所有交易
+    loadTransactions();
+    
+    // 设置搜索按钮事件
+    document.getElementById('search-btn').addEventListener('click', searchTransactions);
+    
+    // 设置搜索输入框回车事件
+    document.getElementById('search-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchTransactions();
+        }
+    });
+});
+
+function loadTransactions() {
+    fetch('/api/transactions')
+        .then(response => response.json())
+        .then(transactions => {
+            displayTransactions(transactions);
+        })
+        .catch(error => {
+            console.error('加载交易数据失败:', error);
+            document.getElementById('transactions-table-body').innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-3">
+                        <p class="text-danger mb-0">加载交易数据失败，请刷新页面重试</p>
+                    </td>
+                </tr>
+            `;
+        });
+}
+
+function displayTransactions(transactions) {
+    const tableBody = document.getElementById('transactions-table-body');
+    
+    if (transactions.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-3">
+                    <p class="mb-0">暂无交易数据</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    let tableHtml = '';
+    
+    // 排序交易，最新的在前面
+    transactions.sort((a, b) => b.timestamp - a.timestamp);
+    
+    transactions.forEach((tx, index) => {
+        // 交易内容摘要
+        let contentSummary = '';
+        if (tx.type === 'coinbase') {
+            contentSummary = `${tx.amount} QTC → ${tx.recipient}`;
+        } else if (tx.type === 'message') {
+            contentSummary = tx.content ? 
+                (tx.content.length > 30 ? tx.content.substring(0, 30) + '...' : tx.content) : 
+                '无内容';
+        } else if (tx.type === 'transfer') {
+            contentSummary = `${tx.amount} QTC: ${tx.sender} → ${tx.recipient}`;
+        } else {
+            contentSummary = '自定义交易';
+        }
+        
+        tableHtml += `
+            <tr>
+                <td>
+                    <a href="/blocks?block=${tx.block_index}" class="text-decoration-none">
+                        ${tx.block_index}
+                    </a>
+                </td>
+                <td>
+                    <span class="badge ${tx.type === 'coinbase' ? 'bg-success' : (tx.type === 'transfer' ? 'bg-warning text-dark' : 'bg-info')}">
+                        ${tx.type}
+                    </span>
+                </td>
+                <td class="text-truncate" style="max-width: 250px;">${contentSummary}</td>
+                <td>${tx.timestamp_human}</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                            onclick="showTransactionDetails(${JSON.stringify(tx).replace(/"/g, '&quot;')}, ${tx.block_index})">
+                        查看详情
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableBody.innerHTML = tableHtml;
+}
+
+function showTransactionDetails(tx, blockIndex) {
+    // 更新模态框标题
+    document.getElementById('txModalLabel').textContent = `交易详情 (区块 #${blockIndex})`;
+    
+    // 设置"查看所在区块"按钮的事件
+    document.getElementById('view-block-btn').onclick = function() {
+        window.location.href = `/blocks?block=${blockIndex}`;
+    };
+    
+    // 显示交易详情
+    let txDetailsHtml = `
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span>交易类型: ${tx.type}</span>
+                <span class="badge ${tx.type === 'coinbase' ? 'bg-success' : (tx.type === 'transfer' ? 'bg-warning text-dark' : 'bg-info')}">
+                    ${tx.type}
+                </span>
+            </div>
+            <div class="card-body">
+                <pre class="mb-0"><code>${JSON.stringify(tx, null, 2)}</code></pre>
+            </div>
+        </div>
+        
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th width="150">所在区块</th>
+                    <td>${tx.block_index}</td>
+                </tr>
+                <tr>
+                    <th>区块哈希</th>
+                    <td class="text-break">
+                        <span class="hash-value">${tx.block_hash}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>时间戳</th>
+                    <td>${tx.timestamp_human}</td>
+                </tr>
+            </tbody>
+        </table>
+    `;
+    
+    document.getElementById('tx-details').innerHTML = txDetailsHtml;
+    
+    // 显示模态框
+    new bootstrap.Modal(document.getElementById('txModal')).show();
+}
+
+function searchTransactions() {
+    const searchTerm = document.getElementById('search-input').value.trim();
+    
+    if (!searchTerm) {
+        // 如果搜索词为空，显示所有交易
+        loadTransactions();
+        return;
+    }
+    
+    // 显示加载状态
+    document.getElementById('transactions-table-body').innerHTML = `
+        <tr>
+            <td colspan="5" class="text-center py-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">搜索中...</span>
+                </div>
+                <p class="mt-2 mb-0">正在搜索交易...</p>
+            </td>
+        </tr>
+    `;
+    
+    // 搜索交易
+    fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`)
+        .then(response => response.json())
+        .then(results => {
+            if (results.transactions && results.transactions.length > 0) {
+                displayTransactions(results.transactions);
+            } else {
+                document.getElementById('transactions-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-3">
+                            <p class="mb-0">未找到匹配的交易</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('搜索交易失败:', error);
+            document.getElementById('transactions-table-body').innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-3">
+                        <p class="text-danger mb-0">搜索失败，请重试</p>
+                    </td>
+                </tr>
+            `;
+        });
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hash-value {
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+pre {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow: auto;
+}
+
+code {
+    color: #212529;
+}
+</style>
+{% endblock %} 

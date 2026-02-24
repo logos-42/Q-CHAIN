@@ -1,0 +1,14 @@
+{
+  "node": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "auto_external": true
+  },
+  "blockchain": {
+    "difficulty": 4,
+    "token_name": "MyPrivateChain",
+    "token_symbol": "MPC",
+    "token_supply": 100000000000
+  },
+  "known_peers": []
+}

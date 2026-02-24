@@ -6,6 +6,7 @@ namespace QuantumBlockchain.Proof {
     open Microsoft.Quantum.Math;
     open Microsoft.Quantum.Canon;
     open Microsoft.Quantum.Logical;
+    open Microsoft.Quantum.Random;
     open QuantumBlockchain.QRNG;
 
     function EncodeQubitState(data : String) : (String, String) {

@@ -1,0 +1,154 @@
+/**
+ * 量子区块链前端主要样式
+ */
+
+/* 全局样式 */
+:root {
+    --primary-color: #0d6efd;
+    --primary-dark: #0b5ed7;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --info-color: #0dcaf0;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9f9fa;
+    overflow-x: hidden;
+}
+
+/* 导航栏样式 */
+.navbar {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+/* 卡片样式 */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-radius: 8px 8px 0 0 !important;
+    font-weight: 600;
+}
+
+/* 量子特性样式 */
+.quantum-feature-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+/* 哈希值样式 */
+.hash-value {
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
+}
+
+.hash-value[title="点击复制"]:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+/* 区块链可视化样式 */
+.blockchain-visual {
+    position: relative;
+    padding: 20px 0;
+}
+
+.blockchain-block {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.blockchain-block:not(:last-child):after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    width: 2px;
+    height: 10px;
+    background-color: var(--primary-color);
+}
+
+/* 动画效果 */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 表格样式 */
+.table {
+    vertical-align: middle;
+}
+
+/* 页脚样式 */
+footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .hide-on-mobile {
+        display: none;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+/* 量子特效元素 - 用于装饰 */
+.quantum-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: -1;
+    animation: quantumFloat 8s infinite ease-in-out;
+}
+
+@keyframes quantumFloat {
+    0%, 100% {
+        transform: translateY(0) translateX(0);
+        opacity: 0.2;
+    }
+    25% {
+        transform: translateY(-15px) translateX(10px);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translateY(0) translateX(20px);
+        opacity: 0.2;
+    }
+    75% {
+        transform: translateY(15px) translateX(10px);
+        opacity: 0.5;
+    }
+} 

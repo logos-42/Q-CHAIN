@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}量子区块链 - 区块浏览器{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1 class="mb-0">区块浏览器</h1>
+            <a href="/add-block" class="btn btn-primary">添加新区块</a>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <!-- 左侧区块列表 -->
+    <div class="col-lg-5 mb-4 mb-lg-0" id="blocks-list-container">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">区块列表</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush" id="blocks-list">
+                    <div class="list-group-item text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p class="mt-2 mb-0">正在加载区块数据...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧区块详情 -->
+    <div class="col-lg-7" id="block-details-container">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0" id="block-details-title">区块详情</h5>
+            </div>
+            <div class="card-body" id="block-details">
+                <div class="text-center py-5">
+                    <p class="mb-0">请从左侧选择一个区块查看详情</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 加载所有区块
+    loadBlocks();
+    
+    // 检查URL参数是否有指定区块
+    const urlParams = new URLSearchParams(window.location.search);
+    const blockIndex = urlParams.get('block');
+    if (blockIndex) {
+        loadBlockDetails(blockIndex);
+    }
+});
+
+function loadBlocks() {
+    fetch('/api/blocks')
+        .then(response => response.json())
+        .then(blocks => {
+            displayBlocks(blocks);
+        })
+        .catch(error => {
+            console.error('加载区块数据失败:', error);
+            document.getElementById('blocks-list').innerHTML = `
+                <div class="list-group-item text-center py-3">
+                    <p class="text-danger mb-0">加载区块数据失败，请刷新页面重试</p>
+                </div>
+            `;
+        });
+}
+
+function displayBlocks(blocks) {
+    const blocksListEl = document.getElementById('blocks-list');
+    
+    if (blocks.length === 0) {
+        blocksListEl.innerHTML = `
+            <div class="list-group-item text-center py-3">
+                <p class="mb-0">暂无区块数据</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // 反转区块顺序，显示最新的在前面
+    blocks.reverse();
+    
+    let blocksHtml = '';
+    
+    blocks.forEach(block => {
+        const date = new Date(block.timestamp * 1000);
+        blocksHtml += `
+            <a href="javascript:void(0)" onclick="loadBlockDetails(${block.index})" 
+               class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">区块 #${block.index}</h5>
+                    <small>${date.toLocaleDateString()}</small>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <p class="mb-1 text-truncate" style="max-width: 70%;">
+                        <small class="text-muted">哈希：</small>
+                        <span class="hash-value">${block.hash.substring(0, 16)}...</span>
+                    </p>
+                    ${block.quantum_proof ? `<span class="badge bg-info rounded-pill" title="量子证明">PQEC</span>` : ''}
+                    <span class="badge bg-primary rounded-pill">${block.tx_count} 交易</span>
+                </div>
+                <small class="text-muted">${date.toLocaleTimeString()}</small>
+            </a>
+        `;
+    });
+    
+    blocksListEl.innerHTML = blocksHtml;
+}
+
+function loadBlockDetails(blockIndex) {
+    // 显示加载状态
+    document.getElementById('block-details').innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+            <p class="mt-2 mb-0">正在加载区块 #${blockIndex} 详情...</p>
+        </div>
+    `;
+    
+    // 加载区块详情
+    fetch(`/api/block/${blockIndex}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('区块不存在');
+            }
+            return response.json();
+        })
+        .then(block => {
+            displayBlockDetails(block);
+            // 更新URL，不刷新页面
+            history.pushState(null, '', `/blocks?block=${blockIndex}`);
+        })
+        .catch(error => {
+            console.error('加载区块详情失败:', error);
+            document.getElementById('block-details').innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    <h4 class="alert-heading">加载失败</h4>
+                    <p>无法加载区块 #${blockIndex} 的详情: ${error.message}</p>
+                </div>
+            `;
+        });
+}
+
+function displayBlockDetails(block) {
+    document.getElementById('block-details-title').textContent = `区块 #${block.index} 详情`;
+    
+    // 创建交易HTML
+    let transactionsHtml = '';
+    if (block.data && block.data.transactions && block.data.transactions.length > 0) {
+        block.data.transactions.forEach((tx, index) => {
+            transactionsHtml += `
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between">
+                        <span>交易 #${index}</span>
+                        <span class="badge ${tx.type === 'coinbase' ? 'bg-success' : 'bg-info'}">${tx.type}</span>
+                    </div>
+                    <div class="card-body">
+                        <pre class="mb-0"><code>${JSON.stringify(tx, null, 2)}</code></pre>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        transactionsHtml = '<p class="text-muted">该区块没有交易数据</p>';
+    }
+    
+    // 提取量子签名
+    const quantumSignature = block.quantum_signature || 
+                            (block.data && block.data.quantum_signature) || 
+                            "无量子签名";
+                            
+    // 提取量子密钥
+    const quantumKey = (block.data && block.data.quantum_key) || "无量子密钥";
+    
+    // 提取量子证明 (PQEC)
+    const quantumProof = block.quantum_proof || 
+                        (block.data && block.data.quantum_proof) ||
+                        (block.data && block.data.proof) ||
+                        null;
+    
+    // 验证状态
+    const verificationStatus = block.verified !== undefined ? 
+        (block.verified ? '<span class="badge bg-success">已验证</span>' : '<span class="badge bg-danger">未验证</span>') :
+        '<span class="badge bg-secondary">待验证</span>';
+    
+    // 显示区块详情
+    document.getElementById('block-details').innerHTML = `
+        <div class="mb-4">
+            <h4 class="mb-3">基本信息</h4>
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th width="150">区块高度</th>
+                        <td>${block.index}</td>
+                    </tr>
+                    <tr>
+                        <th>时间戳</th>
+                        <td>${block.timestamp_human}</td>
+                    </tr>
+                    <tr>
+                        <th>哈希</th>
+                        <td class="text-break">
+                            <span class="hash-value">${block.hash}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>前一个哈希</th>
+                        <td class="text-break">
+                            <span class="hash-value">${block.previous_hash}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>交易数量</th>
+                        <td>${block.data && block.data.transactions ? block.data.transactions.length : 0}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="mb-4">
+            <h4 class="mb-3">量子特性</h4>
+            <table class="table table-bordered">
+                <tbody>
+                    <tr>
+                        <th width="150">量子签名</th>
+                        <td class="text-break">
+                            <span class="hash-value">${quantumSignature}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>量子密钥</th>
+                        <td>${quantumKey}</td>
+                    </tr>
+                    ${quantumProof ? `
+                    <tr>
+                        <th>量子证明 (PQEC)</th>
+                        <td class="text-break">
+                            <span class="hash-value">${quantumProof}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>验证状态</th>
+                        <td>${verificationStatus}</td>
+                    </tr>
+                    ` : ''}
+                    ${block.data && block.data.merkle_root ? `
+                    <tr>
+                        <th>Merkle根</th>
+                        <td class="text-break">
+                            <span class="hash-value">${block.data.merkle_root}</span>
+                        </td>
+                    </tr>
+                    ` : ''}
+                    ${block.data && block.data.nonce ? `
+                    <tr>
+                        <th>Nonce</th>
+                        <td>${block.data.nonce}</td>
+                    </tr>
+                    ` : ''}
+                </tbody>
+            </table>
+        </div>
+        
+        <div>
+            <h4 class="mb-3">交易数据</h4>
+            ${transactionsHtml}
+        </div>
+    `;
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hash-value {
+    font-family: monospace;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
+
+pre {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    max-height: 200px;
+    overflow: auto;
+}
+
+code {
+    color: #212529;
+}
+</style>
+{% endblock %} 
